@@ -4,6 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -11,16 +14,12 @@ import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.AdditionalMatchers.not;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class JsonControllerTest {
@@ -35,50 +34,129 @@ public class JsonControllerTest {
 
     @Mock
     HashMap<UUID, Long> tokenMap;
+    @Mock
+    RestTemplate rest;
 
     //Ip test
+
     @Test
-    void itShouldReturnClientsIp() {
-        String ip = "127.0.01";
-        IP expectedIp = new IP(ip);
-        var token = UUID.randomUUID();
-        when(request.getRemoteAddr()).thenReturn(ip);
-        when(tokenMap.containsKey(token)).thenReturn(true);
-        Assertions.assertEquals(expectedIp, controller.ip(token, request));
+    void itShouldCallIpAddressAndReturnAnIpAddress() {
+        final var token = UUID.randomUUID();
+        JsonController spyTemp = Mockito.spy(controller);
+        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
+
+        Assertions.assertEquals(IP.class, spyTemp.ip(token, request).getClass());
+        verify(request, times(1)).getRemoteAddr();
     }
 
     @Test
-    public void datetimeTest(){
-        //DateTime dateTime = controller.dateTime(request);
+    void itShouldCallCheckAuthWithToken() {
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        final var token = UUID.randomUUID();
+        JsonController spyTemp = Mockito.spy(controller);
+        spyTemp.ip(token, request);
+//        doNothing().when(spyTemp).checkAuthorized(captor.capture());
+        verify(spyTemp, times(1)).checkAuthorized(token);
+    }
+
+//    @Test
+//    void itShouldReturnClientsIp() {
+//        String ip = "127.0.01";
+//        IP expectedIp = new IP(ip);
+//        var token = UUID.randomUUID();
+//        when(request.getRemoteAddr()).thenReturn(ip);
+//        when(tokenMap.containsKey(token)).thenReturn(true);
+//        Assertions.assertEquals(expectedIp, controller.ip(token, request));
+//    }
+
+//    @Test
+//    public void datetimeTest(){
+//        //DateTime dateTime = controller.dateTime(request);
+//        String todayDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+//        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss"));
+//        var token = UUID.randomUUID();
+//        when(tokenMap.containsKey(token)).thenReturn(true);
+//        Assertions.assertEquals(todayDate, controller.dateTime(token, request).date);
+//        Assertions.assertEquals(currentTime, controller.dateTime(token, request).time);
+//    }
+    @Test
+    void itShouldCallDateTimeAndReturnDateTime() {
         String todayDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss"));
-        Assertions.assertEquals(todayDate, controller.dateTime(request).date);
-        Assertions.assertEquals(currentTime, controller.dateTime(request).time);
+        final var token = UUID.randomUUID();
+        JsonController spyTemp = Mockito.spy(controller);
+        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
+        Assertions.assertEquals(todayDate, spyTemp.dateTime(token, request).date);
+        Assertions.assertEquals(currentTime, spyTemp.dateTime(token, request).time);
     }
+
+//    @Test
+//    void itShouldThrowUnauthorizedWhenDateTimeIsCalledWIthBadToken() {
+//        final var token = UUID.randomUUID();
+//        when(tokenMap.containsKey(token)).thenReturn(false);
+//        assertThrows(ResponseStatusException.class, () -> controller.dateTime(token, request));
+//    }
     //headers test
+//    @Test
+//    void ItShouldReturnHeadersWhenCalled() {
+//        Map<String, String> expected = new HashMap<>();
+//        expected.put("header", "header1");
+//        final var token = UUID.randomUUID();
+//        when(tokenMap.containsKey(token)).thenReturn(true);
+//        Assertions.assertEquals(expected, controller.headers(token, expected));
+//
+//    }
     @Test
     void ItShouldReturnHeadersWhenCalled() {
+        final var token = UUID.randomUUID();
         Map<String, String> expected = new HashMap<>();
         expected.put("header", "header1");
-        Map<String, String> result = new HashMap<>();
-        result.put("header", "header1");
-        Assertions.assertEquals(expected, result);
+//        when(tokenMap.containsKey(token)).thenReturn(true);
+        JsonController spyTemp = Mockito.spy(controller);
+        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
+        Assertions.assertEquals(expected, spyTemp.headers(token, expected));
+
     }
+//    @Test
+//    void itShouldThrowUnauthorizedWhenHeadersIsCalledWIthBadToken() {
+//        Map<String, String> expected = new HashMap<>();
+//        expected.put("header", "header1");
+//        final var token = UUID.randomUUID();
+//        when(tokenMap.containsKey(token)).thenReturn(false);
+//        assertThrows(ResponseStatusException.class, () -> controller.headers(token, expected));
+//    }
     //Md5 test
+//    @Test
+//    void itShouldHAshAbcCorrect() throws NoSuchAlgorithmException {
+//        //String expected = "900150983cd24fb0d6963f7d28e17f72";
+//        Map<String, String> textMd5 = new HashMap<>();
+//        textMd5.put("md5", "900150983cd24fb0d6963f7d28e17f72");
+//        final var token = UUID.randomUUID();
+//        //when(text).thenReturn(ip);
+//        when(tokenMap.containsKey(token)).thenReturn(true);
+//        Map<String, String> result = (Map<String, String>) controller.md5(token,"abc");
+//        Assertions.assertEquals("md5",result);
+//    }
+
     @Test
-    void itShouldHAshAbcCorrect() throws NoSuchAlgorithmException {
-        String expected = "900150983cd24fb0d6963f7d28e17f72";
-//        Map<String, String> expectedMd5 = new HashMap<>();
-//        expectedMd5.put("md5", expected);
-        //Map<String, String> result = (Map<String, String>) controller.md5("abc");
-        Assertions.assertEquals("md5",controller.md5("abc"));
+    void itShouldReturnMd5Result() throws NoSuchAlgorithmException {
+        final var token = UUID.randomUUID();
+        JsonController spyTemp = Mockito.spy(controller);
+        String original = "abc";
+        String md5 = "900150983cd24fb0d6963f7d28e17f72".toLowerCase();
+        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
+        Md5 md5Func = spyTemp.md5(token, original);
+        //Map<String, String> result = (Map<String, String>) spyTemp.md5(token,"abc");
+        Assertions.assertEquals(Md5.class, md5Func.getClass());
+        Assertions.assertEquals(md5, md5Func.md5);
+        Assertions.assertEquals(original, md5Func.original);
     }
-    @Test
-    void itShouldReturnArrayWhenGivenArray() {
-        String testArray = "[1,2,3]";
-        JSONValidate test = controller.validate(testArray);
-        Assertions.assertEquals("array", test.object_or_array);
-    }
+//    @Test
+//    void itShouldReturnArrayWhenGivenArray() {
+//        String testArray = "[1,2,3]";
+//        JSONValidate test = controller.validate(testArray);
+//        Assertions.assertEquals("array", test.object_or_array);
+//    }
     @Test
     void itShouldReturnUnauthorizedWhenUserIsWrong() {
         final var username = UUID.randomUUID().toString();
@@ -121,6 +199,8 @@ public class JsonControllerTest {
         final var token = controller.login(username, password);
         assertEquals(token, captor.getValue());
     }
+
+    //register
     @Test
     void itShouldReturnInvalidIfUsernameExists() {
         final String username = "some username";
@@ -148,45 +228,76 @@ public class JsonControllerTest {
         when(tokenMap.containsKey(token)).thenReturn(false);
         assertThrows(ResponseStatusException.class, () -> controller.ip(token, request));
     }
-//    @Test
-//    void itShouldThrowUnauthorizedWhenFizzBuzzCalledWithBadToken() {
-//        final var token = UUID.randomUUID();
-//        when(tokenMap.containsKey(token)).thenReturn(false);
-//        Integer input = 6;
-//        assertThrows(ResponseStatusException.class, () -> controller.fizzbuzz(token, input));
-//    }
 
-    @Test
-    void itShouldDelTokenWhenLogout() {
-        when(repository.findByUsernameAndPassword("user1", "pass1")).thenReturn(Optional.of(
-                new UserAccount()));
-        UUID login1 = controller.login("user1", "pass1");
-        tokenMap.put(login1, 1L);
-        when(repository.findByUsernameAndPassword("user2", "pass2")).thenReturn(Optional.of(
-                new UserAccount()));
-        UUID login2 = controller.login("user2", "pass2");
-        tokenMap.put(login2, 2L);
-        controller.logout(login1);
-        //System.out.println(tokenMapTest);
-        //when(tokenMap.containsKey(login2)).thenReturn(true);
-        //containsKey login1 or login2 passes
-        assertFalse(tokenMap.containsKey(login2));
-    }
+//    @Test
+//    void itShouldDelTokenWhenLogout() {
+//        when(repository.findByUsernameAndPassword("user1", "pass1")).thenReturn(Optional.of(
+//                new UserAccount()));
+//        UUID login1 = controller.login("user1", "pass1");
+//        tokenMap.put(login1, 1L);
+//        when(repository.findByUsernameAndPassword("user2", "pass2")).thenReturn(Optional.of(
+//                new UserAccount()));
+//        UUID login2 = controller.login("user2", "pass2");
+//        tokenMap.put(login2, 2L);
+//        System.out.println("tokenMap");
+//        controller.logout(login1);
+//        when(tokenMap.containsKey(login2)).thenReturn(true);
+//        assertTrue(tokenMap.containsKey(login2));
+//    }
     @Test
     void itShouldDeleteTokenWhenLogout() {
         final Long id = (long) (Math.random() * 9999999);
         HashMap<UUID, Long> expected = new HashMap<>();
         UUID token = UUID.randomUUID();
-        tokenMap.put(token, id);
+//        tokenMap.put(token, id);
         assertEquals(expected, controller.logout(token));
     }
+//    @Test
+//    void itShouldLogoutWithGivenToken() {
+//        final var token = UUID.randomUUID();
+//        tokenMap.put(token, 1L);
+//        controller.logout(token);
+//        Assertions.assertFalse(tokenMap.containsKey(token));
+//    }
     @Test
-    void itShouldLogout() {
-        final var token = UUID.randomUUID();
-        tokenMap.put(token, 1234L);
-        controller.logout(token);
-        Assertions.assertFalse(tokenMap.containsKey(token));
+    void itShouldThrowUnauthWhenOtherStatusIsUnauth() {
+        final UUID token = UUID.randomUUID();
+        String url = "http://localhost:8081/isAuthorized?token=" + token;
+
+//        {
+//            RestTemplate rest;
+//            rest = new RestTemplate();
+//            ResponseEntity<Void> response = rest.getForEntity(url, Void.class, (Object) null);
+//            response.getStatusCode(); // do something with that status code
+//        }
+
+    when(rest.getForEntity(url, Void.class))
+            .thenReturn(new ResponseEntity<Void>(HttpStatus.UNAUTHORIZED));
+    final ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+            () -> controller.checkAuthorized(token));
+    assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatus());
+}
+
+    @Test
+    void itShouldThrowIntErrWhenOtherStatusIsOther() {
+        final UUID token = UUID.randomUUID();
+        String url = "http://localhost:8081/isAuthorized?token=" + token;
+        when(rest.getForEntity(url, Void.class))
+                .thenReturn(new ResponseEntity<Void>(HttpStatus.CONFLICT));
+        final ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> controller.checkAuthorized(token));
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, exception.getStatus());
+    }
+
+    @Test
+    void itShouldNotThrowWhenOtherStatusIsOK() {
+        final UUID token = UUID.randomUUID();
+        String url = "http://localhost:8081/isAuthorized?token=" + token;
+        when(rest.getForEntity(url, Void.class))
+                .thenReturn(new ResponseEntity<Void>(HttpStatus.OK));
+        assertDoesNotThrow(() -> controller.checkAuthorized(token));
     }
 
 }
+
 

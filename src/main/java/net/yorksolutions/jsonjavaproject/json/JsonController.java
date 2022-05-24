@@ -38,33 +38,40 @@ public class JsonController {
 
     @GetMapping("/ip")
     @CrossOrigin
+
     public IP ip(UUID token, HttpServletRequest request) {
-        if (!tokenMap.containsKey(token))
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        checkAuthorized(token);
+//        if (!tokenMap.containsKey(token))
+//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         return new IP(request.getRemoteAddr());
     }
 
     @GetMapping("/datetime")
     @CrossOrigin
-    public static DateTime dateTime(HttpServletRequest request) {
+    public DateTime dateTime(UUID token, HttpServletRequest request) {
+        checkAuthorized(token);
         return new DateTime();
     }
 
     @GetMapping("/headers")
     @CrossOrigin
-    public static Map<String, String> headers(@RequestHeader Map<String, String> headers) {
+    public Map<String, String> headers(UUID token, @RequestHeader Map<String, String> headers) {
+        checkAuthorized(token);
         return headers;
     }
 
     @GetMapping("/md5")
     @CrossOrigin
-    public static Md5 md5(@RequestParam String text) throws NoSuchAlgorithmException {
+    public Md5 md5(UUID token, @RequestParam String text) throws NoSuchAlgorithmException {
+        checkAuthorized(token);
+
         return new Md5(text);
     }
 
     @GetMapping("/validate")
     @CrossOrigin
-    public static JSONValidate validate(@RequestParam String json) {
+    public JSONValidate validate(UUID token, @RequestParam String json) {
+        checkAuthorized(token);
         return new JSONValidate(json);
     }
 
@@ -78,6 +85,8 @@ public class JsonController {
         // If not found, inform the client that they are unauthorized
         if (result.isEmpty())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        else if (repository.findByUsername(username).isPresent())
+        throw new ResponseStatusException(HttpStatus.CONFLICT);
 
         // If found:
         // Generate a token that is to be used for all future requests that are associated
@@ -110,4 +119,6 @@ public class JsonController {
         return tokenMap;
     }
 
+    public void checkAuthorized(UUID token) {
+    }
 }
