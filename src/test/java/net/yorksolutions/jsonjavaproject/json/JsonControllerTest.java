@@ -1,5 +1,6 @@
 package net.yorksolutions.jsonjavaproject.json;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
@@ -25,26 +26,26 @@ public class JsonControllerTest {
     HttpServletRequest request;
 
     @InjectMocks
-    //@Spy
     JsonController controller;
+    @Spy
+    JsonController spyController;
 
-//    @Mock
-//    UserAccountRepository repository;
-//
-//    @Mock
-//    HashMap<UUID, Long> tokenMap;
     @Mock
     RestTemplate rest;
 
-    //Ip test
+    @BeforeEach
+    public void initialSpy() {
+        spyController = Mockito.spy(new JsonController());
+    }
+
 
     @Test
     void itShouldCallIpAddressAndReturnAnIpAddress() {
         final var token = UUID.randomUUID();
-        JsonController spyTemp = Mockito.spy(controller);
-        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
-        Assertions.assertEquals(IP.class, spyTemp.ip(token, request).getClass());
-        verify(request, times(1)).getRemoteAddr();
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        Mockito.doNothing().when(spyController).checkAuthorized(captor.capture());
+        Assertions.assertEquals(IP.class, spyController.ip(token, request).getClass());
+        assertEquals(token, captor.getValue());
     }
 
     @Test
@@ -52,10 +53,10 @@ public class JsonControllerTest {
         String todayDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH-mm-ss"));
         final var token = UUID.randomUUID();
-        JsonController spyTemp = Mockito.spy(controller);
-        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
-        Assertions.assertEquals(todayDate, spyTemp.dateTime(token, request).date);
-        Assertions.assertEquals(currentTime, spyTemp.dateTime(token, request).time);
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        Mockito.doNothing().when(spyController).checkAuthorized(captor.capture());
+        Assertions.assertEquals(todayDate, spyController.dateTime(token, request).date);
+        Assertions.assertEquals(currentTime, spyController.dateTime(token, request).time);
     }
 
 
@@ -63,11 +64,9 @@ public class JsonControllerTest {
     void ItShouldReturnHeadersWhenCalled() {
         final var token = UUID.randomUUID();
         Map<String, String> expected = new HashMap<>();
-//        expected.put("header", "header1");
-//        when(tokenMap.containsKey(token)).thenReturn(true);
-        JsonController spyTemp = Mockito.spy(controller);
-        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
-        Assertions.assertEquals(expected, spyTemp.headers(token, expected));
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        Mockito.doNothing().when(spyController).checkAuthorized(captor.capture());
+        Assertions.assertEquals(expected, spyController.headers(token, expected));
 
     }
 
@@ -75,12 +74,11 @@ public class JsonControllerTest {
     @Test
     void itShouldReturnMd5Result() throws NoSuchAlgorithmException {
         final var token = UUID.randomUUID();
-        JsonController spyTemp = Mockito.spy(controller);
         String original = "abc";
         String md5 = "900150983cd24fb0d6963f7d28e17f72".toLowerCase();
-        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
-        Md5 md5Func = spyTemp.md5(token, original);
-        //Map<String, String> result = (Map<String, String>) spyTemp.md5(token,"abc");
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        Mockito.doNothing().when(spyController).checkAuthorized(captor.capture());
+        Md5 md5Func = spyController.md5(token, original);
         Assertions.assertEquals(Md5.class, md5Func.getClass());
         Assertions.assertEquals(md5, md5Func.md5);
         Assertions.assertEquals(original, md5Func.original);
@@ -89,10 +87,10 @@ public class JsonControllerTest {
     @Test
     void itShouldReturnArrayWhenGivenArray() {
         final var token = UUID.randomUUID();
-        JsonController spyTemp = Mockito.spy(controller);
-        Mockito.doNothing().when(spyTemp).checkAuthorized(token);
+        ArgumentCaptor<UUID> captor = ArgumentCaptor.forClass(UUID.class);
+        Mockito.doNothing().when(spyController).checkAuthorized(captor.capture());
         String testArray = "[1,2,3]";
-        JSONValidate test = spyTemp.validate(token, testArray);
+        JSONValidate test = spyController.validate(token, testArray);
         Assertions.assertEquals("array", test.object_or_array);
     }
     @Test
@@ -135,6 +133,8 @@ public class JsonControllerTest {
     }
 
 }
+
+
 //    @Test
 //    void itShouldDelTokenWhenLogout() {
 //        when(repository.findByUsernameAndPassword("user1", "pass1")).thenReturn(Optional.of(

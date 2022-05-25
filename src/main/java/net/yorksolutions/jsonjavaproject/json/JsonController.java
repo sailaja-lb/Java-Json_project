@@ -18,27 +18,22 @@ import java.util.UUID;
 @RequestMapping("/")
 public class JsonController {
 
-
-    //private final UserAccountRepository repository;
-    //private final HashMap<UUID, Long> tokenMap;
     private final RestTemplate rest;
 
     // This is for Spring
 //    @NonNull UserAccountRepository repository
-    @Autowired
+    @Autowired(required = false)
     public JsonController() {
-        //this.repository = repository;
-        //this.tokenMap = new HashMap<>();
         this.rest = new RestTemplate();
     }
 
     // This is for Mockito
-      public JsonController(RestTemplate rest) {
-//              @NonNull UserAccountRepository repository, @NonNull HashMap<UUID, Long> tokenMap,
-
+      public JsonController(@NonNull RestTemplate rest) {
+//              UserAccountRepository repository, @NonNull HashMap<UUID, Long> tokenMap,
+          this.rest = rest;
         //this.repository = repository;
         //this.tokenMap = tokenMap;
-        this.rest = rest;
+
     }
     public void checkAuthorized(UUID token) {
         String url = "http://localhost:8081/isAuthorized?token=" + token;
@@ -61,8 +56,6 @@ public class JsonController {
 
     public IP ip(UUID token, HttpServletRequest request) {
         checkAuthorized(token);
-//        if (!tokenMap.containsKey(token))
-//            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         return new IP(request.getRemoteAddr());
     }
 

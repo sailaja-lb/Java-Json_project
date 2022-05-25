@@ -2,6 +2,7 @@ package net.yorksolutions.jsonjavaproject.json;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,8 +17,6 @@ import java.util.UUID;
 public class AuthorizeController {
 
 
-    public void checkAuthorized(UUID token) {
-    }
 
     private final UserAccountRepository repository;
     private final HashMap<UUID, Long> tokenMap;
@@ -43,9 +42,9 @@ public class AuthorizeController {
         // If not found, inform the client that they are unauthorized
         if (result.isEmpty())
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        else if (repository.findByUsername(username).isPresent())
-            throw new ResponseStatusException(HttpStatus.CONFLICT);
-
+//        else if (tokenMap.containsValue(result.get().getId())) {
+//            throw new ResponseStatusException(HttpStatus.CONFLICT);
+//        }
         // If found:
         // Generate a token that is to be used for all future requests that are associated
         //     w/ this user account
